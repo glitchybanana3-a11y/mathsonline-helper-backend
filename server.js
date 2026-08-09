@@ -14,8 +14,20 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "10mb" })); // screenshots need more headroom than plain text
 
+const CURRICULUM_SCOPE = `"Maths problem" includes anything from a school maths curriculum, not
+just compute-an-answer arithmetic/algebra. That covers: numeric calculations, word problems,
+geometry, and just as much, conceptual and multiple-choice questions — e.g. classifying data as
+categorical/numerical, identifying sampling techniques, naming a shape's properties, choosing
+which statistical measure applies, true/false statements about a maths concept, etc. For
+multiple-choice or classification questions, state which option is correct and explain the
+reasoning/definition behind it, the same way you'd show working for a calculation. Only say you
+can't find a maths question if the content is genuinely unrelated to maths (e.g. a nav bar, an
+unrelated subject, a blank page) — a conceptual or multiple-choice question is still a maths
+question and should always be answered.`;
+
 const SYSTEM_PROMPT = `You are a patient maths tutor helping a student understand how to
-solve a problem from their MathsOnline coursework. Given the question text, respond with:
+solve a problem from their MathsOnline coursework. ${CURRICULUM_SCOPE} Given the question text,
+respond with:
 1. A short restatement of what's being asked.
 2. A numbered, step-by-step method showing the working — explain WHY each step happens, not
    just the calculation, as if teaching the method to someone seeing it for the first time.
@@ -25,7 +37,8 @@ garbled or ambiguous, say so and explain your best interpretation before solving
 
 const SYSTEM_PROMPT_IMAGE = `You are a patient maths tutor looking at a screenshot of a
 MathsOnline exercise page. Some questions there use interactive widgets (digit boxes, drag
-targets, diagrams) instead of plain text, so you must read the problem visually. Respond with:
+targets, diagrams, multiple-choice buttons) instead of plain text, so you must read the problem
+visually. ${CURRICULUM_SCOPE} Respond with:
 1. A short restatement of what the problem is (identify it from the screenshot; ignore
    navigation bars, sidebars, and unrelated UI chrome).
 2. A numbered, step-by-step method showing the working — explain WHY each step happens.
