@@ -3,6 +3,10 @@ import cors from "cors";
 
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 const MODEL = "mistral-small-latest";
+// Reading a diagram/screenshot correctly (numbers, which side is which, etc.)
+// is harder than parsing plain text, so the image path gets Mistral's
+// stronger reasoning+vision model instead of the fast/small one.
+const MODEL_IMAGE = "mistral-medium-latest";
 const PORT = process.env.PORT || 8787;
 
 if (!MISTRAL_API_KEY) {
@@ -38,11 +42,17 @@ garbled or ambiguous, say so and explain your best interpretation before solving
 const SYSTEM_PROMPT_IMAGE = `You are a patient maths tutor looking at a screenshot of a
 MathsOnline exercise page. Some questions there use interactive widgets (digit boxes, drag
 targets, diagrams, multiple-choice buttons) instead of plain text, so you must read the problem
-visually. ${CURRICULUM_SCOPE} Respond with:
-1. A short restatement of what the problem is (identify it from the screenshot; ignore
-   navigation bars, sidebars, and unrelated UI chrome).
+visually — read every label and number in the diagram carefully before doing anything else, since
+misreading a value (e.g. mixing up which side of a triangle a number belongs to) is the most
+common way this goes wrong. ${CURRICULUM_SCOPE} Respond with:
+1. A short restatement of what the problem is, including the exact values/labels you read from
+   the image (identify it from the screenshot; ignore navigation bars, sidebars, and unrelated UI
+   chrome).
 2. A numbered, step-by-step method showing the working — explain WHY each step happens.
-3. The final answer clearly labelled at the end.
+3. Before giving the final answer, silently re-derive it a second way (or re-check the arithmetic)
+   and only proceed once both attempts agree — if they don't agree, redo the reading of the image
+   rather than guessing.
+4. The final answer clearly labelled at the end.
 Keep it concise and use plain text (no markdown symbols like ** or #). If you can't clearly make
 out a maths question in the screenshot, say so plainly instead of guessing.`;
 
@@ -108,7 +118,7 @@ app.post("/solve-image", async (req, res) => {
         "Authorization": `Bearer ${MISTRAL_API_KEY}`
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: MODEL_IMAGE,
         messages: [
           { role: "system", content: SYSTEM_PROMPT_IMAGE },
           {
