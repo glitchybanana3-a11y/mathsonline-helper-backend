@@ -101,7 +101,7 @@ app.post("/solve", async (req, res) => {
 });
 
 app.post("/solve-image", async (req, res) => {
-  const { imageDataUrl } = req.body || {};
+  const { imageDataUrl, hint } = req.body || {};
 
   if (!imageDataUrl || typeof imageDataUrl !== "string" || !imageDataUrl.startsWith("data:image/")) {
     return res.status(400).json({ error: "imageDataUrl (a data:image/... URL) is required" });
@@ -109,6 +109,18 @@ app.post("/solve-image", async (req, res) => {
   if (imageDataUrl.length > 8_000_000) {
     return res.status(400).json({ error: "Screenshot is too large." });
   }
+  if (hint && (typeof hint !== "string" || hint.length > 300)) {
+    return res.status(400).json({ error: "hint must be a short string." });
+  }
+
+  const promptText =
+    hint && hint.trim()
+      ? `Solve the maths problem shown in this screenshot. The student specifically says ` +
+        `they're trying to: "${hint.trim()}" — a diagram can be asked about in more than one ` +
+        `way (e.g. a triangle screenshot might be asked for a side length OR an angle), so ` +
+        `treat what the student wrote as the authoritative answer to "what is being asked," ` +
+        `even if the image alone looks like it could be interpreted differently.`
+      : "Solve the maths problem shown in this screenshot.";
 
   try {
     const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
@@ -124,7 +136,7 @@ app.post("/solve-image", async (req, res) => {
           {
             role: "user",
             content: [
-              { type: "text", text: "Solve the maths problem shown in this screenshot." },
+              { type: "text", text: promptText },
               { type: "image_url", image_url: { url: imageDataUrl } }
             ]
           }
