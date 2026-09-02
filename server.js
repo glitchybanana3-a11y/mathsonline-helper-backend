@@ -12,6 +12,12 @@ const MODEL_DOC = "mistral-medium-latest";
 // Low temperature: less "creative" wandering, more consistent/careful
 // arithmetic — worth the small loss in writing variety for a maths tutor.
 const TEMPERATURE = 0.2;
+// Bump this whenever a change means older installed copies of the
+// MathsOnline Helper extension should stop working until the student/teacher
+// updates — e.g. a bug fix, a breaking change to this API. Endpoint is
+// namespaced under /mathsonline-helper/ since this backend is shared with
+// other extensions/tools that have nothing to do with this version gate.
+const MATHSONLINE_HELPER_MIN_VERSION = "0.4.0";
 const PORT = process.env.PORT || 8787;
 
 if (!MISTRAL_API_KEY) {
@@ -251,6 +257,10 @@ app.post("/solve-doc", async (req, res) => {
     res.status(500).json({ error: "Unexpected server error." });
   }
 });
+
+app.get("/mathsonline-helper/version", (_req, res) =>
+  res.json({ minVersion: MATHSONLINE_HELPER_MIN_VERSION })
+);
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
