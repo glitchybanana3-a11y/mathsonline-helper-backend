@@ -17,7 +17,7 @@ const TEMPERATURE = 0.2;
 // updates — e.g. a bug fix, a breaking change to this API. Endpoint is
 // namespaced under /mathsonline-helper/ since this backend is shared with
 // other extensions/tools that have nothing to do with this version gate.
-const MATHSONLINE_HELPER_MIN_VERSION = "0.4.0";
+const MATHSONLINE_HELPER_MIN_VERSION = "0.4.1";
 const PORT = process.env.PORT || 8787;
 
 if (!MISTRAL_API_KEY) {
